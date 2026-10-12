@@ -77,7 +77,7 @@ export const LobbyView: React.FC = () => {
           </div>
 
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-            Insert your virtual token into 6 genuine retro machines: Claw Machine, Pac-Maze, Space Shooter, 10-Frame Bowling, 8-Ball Pool, and Texas Hold'em Poker!
+            Insert your virtual token into 10 authentic retro arcade games: Claw Machine, Pac-Maze, Neon Bottle Shooter, 10-Frame Bowling, Cyber 8-Ball Pool, Texas Hold'em Poker, Cyber Snake, Cyber Bricks, Cyber Pong, and Whack-a-Mole!
           </p>
 
           <div className="flex flex-wrap items-center gap-4 pt-2">

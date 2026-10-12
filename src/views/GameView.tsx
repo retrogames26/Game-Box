@@ -6,10 +6,14 @@ import { sound } from '../utils/audio';
 
 import { ClawMachine } from '../games/ClawMachine';
 import { PacMaze } from '../games/PacMaze';
-import { ShootingArena } from '../games/ShootingArena';
+import { BottleShooter } from '../games/BottleShooter';
 import { Bowling } from '../games/Bowling';
 import { Pool } from '../games/Pool';
 import { Poker } from '../games/Poker';
+import { SnakeGame } from '../games/SnakeGame';
+import { BreakoutGame } from '../games/BreakoutGame';
+import { PongGame } from '../games/PongGame';
+import { WhackMoleGame } from '../games/WhackMoleGame';
 
 export const GameView: React.FC = () => {
   const { selectedGameId, setActiveView, selectGame, player } = useArcade();
@@ -23,13 +27,21 @@ export const GameView: React.FC = () => {
       case 'pacmaze':
         return <PacMaze />;
       case 'shooter':
-        return <ShootingArena />;
+        return <BottleShooter />;
       case 'bowling':
         return <Bowling />;
       case 'pool':
         return <Pool />;
       case 'poker':
         return <Poker />;
+      case 'snake':
+        return <SnakeGame />;
+      case 'breakout':
+        return <BreakoutGame />;
+      case 'pong':
+        return <PongGame />;
+      case 'whack':
+        return <WhackMoleGame />;
       default:
         return <ClawMachine />;
     }

@@ -20,7 +20,7 @@ service cloud.firestore {
     }
 
     function isValidGameId(gid) {
-      return gid in ['claw', 'pacmaze', 'shooter', 'bowling', 'pool', 'poker'];
+      return gid in ['claw', 'pacmaze', 'shooter', 'bowling', 'pool', 'poker', 'snake', 'breakout', 'pong', 'whack'];
     }
 
     // Player Records
@@ -68,6 +68,13 @@ service cloud.firestore {
         (!('aiScore' in incoming()) || (incoming().aiScore is number && incoming().aiScore >= 0)) &&
         (!('winner' in incoming()) || (incoming().winner is string && incoming().winner.size() <= 16));
       allow update, delete: if false;
+    }
+
+    // Multiplayer Poker Rooms
+    match /rooms/{roomId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(roomId);
+      allow delete: if false;
     }
   }
 }

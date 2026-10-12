@@ -66,7 +66,7 @@ export const AdminView: React.FC = () => {
     setIsLoading(true);
     try {
       let combined: ScoreRecord[] = [];
-      const gameIds: GameId[] = ['claw', 'pacmaze', 'shooter', 'bowling', 'pool', 'poker'];
+      const gameIds: GameId[] = ['claw', 'pacmaze', 'shooter', 'bowling', 'pool', 'poker', 'snake', 'breakout', 'pong', 'whack'];
 
       for (const gid of gameIds) {
         const list = await ArcadeService.getLeaderboard(gid, 'all', 20);

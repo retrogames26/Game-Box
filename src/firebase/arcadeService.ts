@@ -230,32 +230,53 @@ export class ArcadeService {
   ): Promise<ScoreRecord[]> {
     const path = 'scores';
     try {
-      let q = query(
-        collection(db, 'scores'),
-        where('gameId', '==', gameId),
-        orderBy('score', 'desc'),
-        limit(50)
-      );
-
-      const snap = await getDocs(q);
       let records: ScoreRecord[] = [];
+
+      try {
+        // Preferred index query: where gameId == gameId, order by score desc
+        const q = query(
+          collection(db, 'scores'),
+          where('gameId', '==', gameId),
+          orderBy('score', 'desc'),
+          limit(50)
+        );
+        const snap = await getDocs(q);
+        snap.forEach((d) => {
+          records.push(d.data() as ScoreRecord);
+        });
+      } catch (queryErr) {
+        // If composite index is building or missing across new devices, fallback to client-side filtered query
+        console.warn('Index query falling back to gameId-filtered snapshot:', queryErr);
+        const fallbackQ = query(
+          collection(db, 'scores'),
+          where('gameId', '==', gameId),
+          limit(100)
+        );
+        const snap = await getDocs(fallbackQ);
+        snap.forEach((d) => {
+          records.push(d.data() as ScoreRecord);
+        });
+        records.sort((a, b) => (b.score || 0) - (a.score || 0));
+      }
+
       const nowMs = Date.now();
       const oneDayMs = 24 * 60 * 60 * 1000;
       const oneWeekMs = 7 * oneDayMs;
 
-      snap.forEach((d) => {
-        const sc = d.data() as ScoreRecord;
-        if (timeFilter === 'daily') {
+      let filtered = records;
+      if (timeFilter === 'daily') {
+        filtered = filtered.filter((sc) => {
           const createdMs = new Date(sc.createdAt).getTime();
-          if (nowMs - createdMs > oneDayMs) return;
-        } else if (timeFilter === 'weekly') {
+          return nowMs - createdMs <= oneDayMs;
+        });
+      } else if (timeFilter === 'weekly') {
+        filtered = filtered.filter((sc) => {
           const createdMs = new Date(sc.createdAt).getTime();
-          if (nowMs - createdMs > oneWeekMs) return;
-        }
-        records.push(sc);
-      });
+          return nowMs - createdMs <= oneWeekMs;
+        });
+      }
 
-      return records.slice(0, maxResults);
+      return filtered.slice(0, maxResults);
     } catch (err) {
       handleFirestoreError(err, OperationType.LIST, path);
       return [];
@@ -271,24 +292,30 @@ export class ArcadeService {
     maxResults: number = 10
   ): () => void {
     const path = 'scores';
-    const q = query(
-      collection(db, 'scores'),
-      where('gameId', '==', gameId),
-      orderBy('score', 'desc'),
-      limit(maxResults)
-    );
+    try {
+      const q = query(
+        collection(db, 'scores'),
+        where('gameId', '==', gameId),
+        limit(50)
+      );
 
-    return onSnapshot(
-      q,
-      (snap) => {
-        const list: ScoreRecord[] = [];
-        snap.forEach((d) => list.push(d.data() as ScoreRecord));
-        callback(list);
-      },
-      (err) => {
-        handleFirestoreError(err, OperationType.LIST, path);
-      }
-    );
+      return onSnapshot(
+        q,
+        (snap) => {
+          const list: ScoreRecord[] = [];
+          snap.forEach((d) => list.push(d.data() as ScoreRecord));
+          list.sort((a, b) => (b.score || 0) - (a.score || 0));
+          callback(list.slice(0, maxResults));
+        },
+        (err) => {
+          console.warn('Realtime subscription error:', err);
+          handleFirestoreError(err, OperationType.LIST, path);
+        }
+      );
+    } catch (err) {
+      console.warn('Failed to subscribe to leaderboard:', err);
+      return () => {};
+    }
   }
 
   /**
@@ -297,18 +324,30 @@ export class ArcadeService {
   static async getPlayerScores(playerId: string): Promise<ScoreRecord[]> {
     const path = 'scores';
     try {
-      const q = query(
-        collection(db, 'scores'),
-        where('playerId', '==', playerId),
-        orderBy('createdAt', 'desc'),
-        limit(20)
-      );
-      const snap = await getDocs(q);
-      const list: ScoreRecord[] = [];
-      snap.forEach((d) => list.push(d.data() as ScoreRecord));
-      return list;
+      let list: ScoreRecord[] = [];
+      try {
+        const q = query(
+          collection(db, 'scores'),
+          where('playerId', '==', playerId),
+          orderBy('createdAt', 'desc'),
+          limit(20)
+        );
+        const snap = await getDocs(q);
+        snap.forEach((d) => list.push(d.data() as ScoreRecord));
+      } catch (subErr) {
+        // Fallback without orderBy if index is absent
+        const fallbackQ = query(
+          collection(db, 'scores'),
+          where('playerId', '==', playerId),
+          limit(30)
+        );
+        const snap = await getDocs(fallbackQ);
+        snap.forEach((d) => list.push(d.data() as ScoreRecord));
+        list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
+      return list.slice(0, 20);
     } catch (err) {
-      handleFirestoreError(err, OperationType.LIST, path);
+      console.warn('Could not fetch player scores:', err);
       return [];
     }
   }
