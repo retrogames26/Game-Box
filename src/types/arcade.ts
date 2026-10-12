@@ -1,4 +1,4 @@
-export type GameId = 'claw' | 'pacmaze' | 'shooter' | 'breakout' | 'racer' | 'lander';
+export type GameId = 'claw' | 'pacmaze' | 'shooter' | 'bowling' | 'pool' | 'poker';
 
 export interface GameMetadata {
   id: GameId;
@@ -13,43 +13,44 @@ export interface GameMetadata {
   controls: string[];
   versusAiName: string;
   versusAiTitle: string;
+  sortOrder: 'desc' | 'asc';
+  maxScorePossible?: number;
 }
 
-export interface UserProfile {
-  userId: string;
+export interface PlayerRecord {
+  playerId: string;
   username: string;
-  displayName?: string;
   avatarId: string;
-  totalGamesPlayed: number;
+  gamesPlayed: number;
+  totalWins: number;
   totalScore: number;
-  wins: number;
-  losses: number;
   highScores: Record<string, number>;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ScoreRecord {
   id: string;
-  gameId: string;
-  userId: string;
+  playerId: string;
   username: string;
-  avatarId?: string;
+  gameId: GameId;
   score: number;
-  mode?: 'solo' | 'versus_ai';
+  mode: 'solo' | 'versus_ai';
+  result?: 'win' | 'loss' | 'draw' | 'solo';
   detail?: string;
-  createdAt?: string;
+  createdAt: string;
 }
 
-export interface GameMatchHistory {
+export interface MatchRecord {
   id: string;
-  gameId: string;
-  gameName: string;
-  score: number;
-  result?: 'win' | 'loss' | 'solo';
-  aiOpponentName?: string;
-  aiScore?: number;
-  playedAt?: string;
+  gameId: GameId;
+  playerId: string;
+  username: string;
+  mode: 'solo' | 'versus_ai';
+  playerScore: number;
+  aiScore: number;
+  winner: 'player' | 'ai' | 'draw' | 'solo';
+  createdAt: string;
 }
 
 export interface AvatarOption {
@@ -81,10 +82,11 @@ export const GAMES_CATALOG: GameMetadata[] = [
     glowColor: 'rgba(236, 72, 153, 0.6)',
     icon: 'Package',
     difficulty: 'Medium',
-    description: 'Control the high-precision robotic grabber, line up the claws, and snatch rare neon holographic prizes for mega ticket points!',
-    controls: ['A / D or Left / Right Arrows: Move Claw', 'Space or Down Arrow: Drop Claw', 'Touch / Mouse drag also supported'],
+    description: 'Control the mechanical claw horizontally & vertically, time the drop, and snatch high-value neon plushies & holographic diamonds!',
+    controls: ['A / D or Left / Right: Move Claw', 'Space / Down Arrow: Drop Claw', 'Mobile: On-screen buttons or slider'],
     versusAiName: 'RoboClaw 3000',
     versusAiTitle: 'AI Crane Grandmaster',
+    sortOrder: 'desc',
   },
   {
     id: 'pacmaze',
@@ -95,65 +97,71 @@ export const GAMES_CATALOG: GameMetadata[] = [
     glowColor: 'rgba(234, 179, 8, 0.6)',
     icon: 'Ghost',
     difficulty: 'Medium',
-    description: 'Navigate glowing neon corridors, devour cyber pellets, snatch power nodes, and turn the tables on smart roaming AI hunters!',
-    controls: ['WASD or Arrow Keys: Turn Direction', 'Virtual D-Pad on touch devices', 'P: Pause Game'],
+    description: 'Navigate glowing neon corridors, devour cyber pellets, snatch power nodes, and defeat 4 AI hunters with distinct chase personalities!',
+    controls: ['WASD / Arrow Keys: Move Direction', 'Virtual D-Pad on touch devices', 'P: Pause Game'],
     versusAiName: 'Ghost AI Core',
     versusAiTitle: 'Adaptive Hunter AI',
+    sortOrder: 'desc',
   },
   {
     id: 'shooter',
     title: 'Galactic Cyber Defender',
-    tagline: 'Top-Down Star Arena',
+    tagline: 'Top-Down Starfighter Arena',
     category: 'Action Shooter',
     accentColor: '#06b6d4',
     glowColor: 'rgba(6, 182, 212, 0.6)',
     icon: 'Crosshair',
     difficulty: 'Hard',
-    description: 'Pilot an agile Starfighter through enemy drone swarms, collect weapon upgrades, blast dreadnought bosses, and rack up combo multipliers!',
-    controls: ['WASD / Arrows: Thrusters & Move', 'Mouse / Touch: Aim & Auto-Fire', 'Space: Super Nova Bomb'],
+    description: 'Pilot an agile Starfighter through enemy drone swarms, collect weapon upgrades, detonate EMP bombs, and compete live against AI Ace Viper-7!',
+    controls: ['WASD / Arrows: Thrusters & Move', 'Mouse / Touch: Aim & Auto-Fire', 'Space: Super Nova EMP Bomb'],
     versusAiName: 'Viper-7 Ace',
     versusAiTitle: 'Top Gun Combat AI',
+    sortOrder: 'desc',
   },
   {
-    id: 'breakout',
-    title: 'Neon Cyber Bricks',
-    tagline: 'Paddle Velocity Demolition',
-    category: 'Arcade Classic',
-    accentColor: '#a855f7',
-    glowColor: 'rgba(168, 85, 247, 0.6)',
-    icon: 'Shield',
+    id: 'bowling',
+    title: 'Neon Alley Bowling',
+    tagline: '10-Frame Strike Championship',
+    category: 'Sports Arcade',
+    accentColor: '#ef4444',
+    glowColor: 'rgba(239, 68, 68, 0.6)',
+    icon: 'CircleDot',
     difficulty: 'Medium',
-    description: 'Smash through neon brick matrices with multi-ball cascades, laser cannons, and speed boosters before the energy balls escape!',
-    controls: ['Mouse / Touch / A & D: Slide Paddle', 'Space: Launch / Fire Lasers', 'P: Pause'],
-    versusAiName: 'Matrix Reflector',
-    versusAiTitle: 'Paddle Defense Unit',
+    description: 'Authentic 10-pin bowling with full frame-by-frame strike/spare scoring, aim curve, and power meter. Play solo or battle Bowler-Bot 3000!',
+    controls: ['Mouse / Touch / Slider: Aim Ball', 'Hold & Release Space / Button: Power Meter', 'A / D: Add Hook Spin'],
+    versusAiName: 'StrikeBot 3000',
+    versusAiTitle: 'Precision AI Bowler',
+    sortOrder: 'desc',
+    maxScorePossible: 300,
   },
   {
-    id: 'racer',
-    title: 'Synthwave Highway 84',
-    tagline: 'High-Speed Neon Drift',
-    category: 'Arcade Racing',
-    accentColor: '#f43f5e',
-    glowColor: 'rgba(244, 63, 94, 0.6)',
-    icon: 'Car',
-    difficulty: 'Hard',
-    description: 'Scream down a neon grid highway at 280 km/h, draft behind speedsters for slipstream boosts, dodge reckless traffic, and beat the clock!',
-    controls: ['A / D or Left / Right: Steer', 'W / Up: Accelerate', 'Shift / Space: Nitro Turbo Boost'],
-    versusAiName: 'Shadow-GT',
-    versusAiTitle: 'Cyber Street Champion',
-  },
-  {
-    id: 'lander',
-    title: 'Astro Gravity Lander',
-    tagline: 'Lunar Orbital Physics',
-    category: 'Precision Physics',
+    id: 'pool',
+    title: 'Cyber 8-Ball Pool',
+    tagline: 'Precision Billiards Physics',
+    category: 'Physics Sports',
     accentColor: '#10b981',
     glowColor: 'rgba(16, 185, 129, 0.6)',
-    icon: 'Rocket',
+    icon: 'Disc',
     difficulty: 'Hard',
-    description: 'Manage thrusters and inertial gravity to touch down smoothly on narrow mountain pads, rescue astronaut pods, and conserve rocket fuel!',
-    controls: ['W or Up Arrow: Main Thruster', 'A / D or Left / Right: RCS Rotation', 'Space: Stabilizer Thruster'],
-    versusAiName: 'Apollo-Drone 9',
-    versusAiTitle: 'Precision Orbit AI',
+    description: 'Full 2D billiard table physics with cue aiming, trajectory guide, power pull-back, solids vs stripes, 8-ball win condition, and smart AI opponent!',
+    controls: ['Mouse / Touch: Aim Cue Stick', 'Drag Power Meter & Release to Strike', 'Space: Take Shot'],
+    versusAiName: 'Hustler-AI',
+    versusAiTitle: 'Master Cue AI',
+    sortOrder: 'desc',
+  },
+  {
+    id: 'poker',
+    title: 'Neon Hold\'em Poker',
+    tagline: 'Virtual High-Stakes Showdown',
+    category: 'Card Strategy',
+    accentColor: '#a855f7',
+    glowColor: 'rgba(168, 85, 247, 0.6)',
+    icon: 'Club',
+    difficulty: 'Hard',
+    description: 'Free Texas Hold\'em entertainment with virtual chips! Full 52-card deck, community board, authentic hand ranker, Fold/Check/Call/Raise, and 3 AI table rivals!',
+    controls: ['Fold / Check / Call / Raise Buttons', 'Bet Slider for Virtual Chips', 'No Real Money (Free Virtual Chips)'],
+    versusAiName: 'CyberShark & Table AI',
+    versusAiTitle: 'Virtual Cardmasters',
+    sortOrder: 'desc',
   },
 ];

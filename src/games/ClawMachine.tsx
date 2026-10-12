@@ -30,7 +30,7 @@ const INITIAL_PRIZES: Prize[] = [
 ];
 
 export const ClawMachine: React.FC = () => {
-  const { profile, recordFinishedGame, openAuthModal, isGuest } = useArcade();
+  const { player, recordFinishedGame, openUsernameModal } = useArcade();
 
   // Game Settings
   const [gameMode, setGameMode] = useState<'solo' | 'versus_ai'>('solo');
@@ -278,11 +278,9 @@ export const ClawMachine: React.FC = () => {
 
     recordFinishedGame({
       gameId: 'claw',
-      gameName: 'Cyber Claw Machine',
       score: playerScore,
       mode: gameMode,
       result,
-      aiOpponentName: gameMode === 'versus_ai' ? 'RoboClaw 3000' : undefined,
       aiScore: gameMode === 'versus_ai' ? aiScore : undefined,
       detail: `${collectedPrizes.length} prizes snatched (${playerScore} pts)`,
     });
@@ -480,7 +478,7 @@ export const ClawMachine: React.FC = () => {
               <span className="text-slate-400">
                 Turn:{' '}
                 <strong className={currentTurn === 'player' ? 'text-pink-400' : 'text-cyan-400'}>
-                  {currentTurn === 'player' ? profile.username : 'RoboClaw 3000'}
+                  {currentTurn === 'player' ? player.username : 'RoboClaw 3000'}
                 </strong>
               </span>
             )}
@@ -583,22 +581,20 @@ export const ClawMachine: React.FC = () => {
               <Award className="mx-auto text-pink-400" size={32} />
               <div className="text-sm font-bold text-pink-300 font-arcade">GAME FINISHED</div>
               <div className="text-xs text-slate-300">
-                Final Score: <strong className="text-pink-400">{playerScore} pts</strong>
+                Final Score: <strong className="text-pink-400">{playerScore} pts</strong> (Saved to Firestore)
               </div>
               <button
                 onClick={restartGame}
-                className="w-full py-2.5 rounded-xl text-xs font-bold uppercase bg-pink-500 hover:bg-pink-400 text-slate-950 transition flex items-center justify-center gap-2"
+                className="w-full py-2.5 rounded-xl text-xs font-bold uppercase bg-pink-500 hover:bg-pink-400 text-slate-950 transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <RefreshCw size={14} /> Insert Token & Replay
               </button>
-              {isGuest && (
-                <button
-                  onClick={() => openAuthModal('register')}
-                  className="w-full py-2 rounded-xl text-[11px] font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 hover:bg-cyan-900/60 transition"
-                >
-                  Save Score to Leaderboard
-                </button>
-              )}
+              <button
+                onClick={openUsernameModal}
+                className="w-full py-2 rounded-xl text-[11px] font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 hover:bg-cyan-900/60 transition cursor-pointer"
+              >
+                Change Player Tag ({player.username})
+              </button>
             </div>
           )}
         </div>

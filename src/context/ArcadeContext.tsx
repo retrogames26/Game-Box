@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, testFirestoreConnection } from '../firebase/config';
 import { ArcadeService } from '../firebase/arcadeService';
-import { UserProfile, GameId, AVATARS } from '../types/arcade';
+import { PlayerRecord, GameId, GAMES_CATALOG } from '../types/arcade';
 import { sound } from '../utils/audio';
 
 interface Toast {
@@ -12,73 +10,53 @@ interface Toast {
 }
 
 interface ArcadeContextType {
-  user: User | null;
-  profile: UserProfile;
-  isGuest: boolean;
+  player: PlayerRecord;
   isLoading: boolean;
   activeView: 'lobby' | 'game' | 'leaderboards' | 'profile';
   selectedGameId: GameId;
   soundEnabled: boolean;
   crtEffectEnabled: boolean;
-  authModalOpen: boolean;
-  authModalMode: 'login' | 'register';
+  usernameModalOpen: boolean;
   toasts: Toast[];
-  openAuthModal: (mode?: 'login' | 'register') => void;
-  closeAuthModal: () => void;
+  openUsernameModal: () => void;
+  closeUsernameModal: () => void;
+  setUsername: (username: string, avatarId?: string) => Promise<void>;
+  updateAvatar: (avatarId: string) => Promise<void>;
   setActiveView: (view: 'lobby' | 'game' | 'leaderboards' | 'profile') => void;
   selectGame: (gameId: GameId) => void;
   toggleSound: () => void;
   toggleCrtEffect: () => void;
-  refreshProfile: () => Promise<void>;
-  updateAvatar: (avatarId: string) => Promise<void>;
-  logout: () => Promise<void>;
+  refreshPlayer: () => Promise<void>;
   addToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
   recordFinishedGame: (params: {
     gameId: GameId;
-    gameName: string;
     score: number;
     mode: 'solo' | 'versus_ai';
-    result?: 'win' | 'loss' | 'solo';
-    aiOpponentName?: string;
+    result?: 'win' | 'loss' | 'draw' | 'solo';
     aiScore?: number;
     detail?: string;
   }) => Promise<{ isNewHighScore: boolean }>;
 }
 
-const GUEST_KEY = 'neon_arcade_guest_profile';
-
-function getInitialGuestProfile(): UserProfile {
-  const saved = localStorage.getItem(GUEST_KEY);
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch {
-      // ignore
-    }
-  }
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  const guest: UserProfile = {
-    userId: `guest_${randomSuffix}`,
-    username: `Guest_${randomSuffix}`,
-    displayName: `Guest #${randomSuffix}`,
-    avatarId: 'pixel_knight',
-    totalGamesPlayed: 0,
-    totalScore: 0,
-    wins: 0,
-    losses: 0,
-    highScores: {},
-    createdAt: new Date().toISOString(),
-  };
-  localStorage.setItem(GUEST_KEY, JSON.stringify(guest));
-  return guest;
-}
-
 const ArcadeContext = createContext<ArcadeContextType | null>(null);
 
 export const ArcadeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile>(getInitialGuestProfile);
-  const [isGuest, setIsGuest] = useState<boolean>(true);
+  const playerId = ArcadeService.getOrCreatePlayerId();
+  const initialUsername = ArcadeService.getStoredUsername() || '';
+  const initialAvatar = ArcadeService.getStoredAvatar();
+
+  const [player, setPlayer] = useState<PlayerRecord>({
+    playerId,
+    username: initialUsername || 'ArcadePlayer',
+    avatarId: initialAvatar,
+    gamesPlayed: 0,
+    totalWins: 0,
+    totalScore: 0,
+    highScores: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeView, setActiveView] = useState<'lobby' | 'game' | 'leaderboards' | 'profile'>('lobby');
   const [selectedGameId, setSelectedGameId] = useState<GameId>('claw');
@@ -86,68 +64,63 @@ export const ArcadeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [crtEffectEnabled, setCrtEffectEnabled] = useState<boolean>(() => {
     return localStorage.getItem('arcade_crt') !== 'false';
   });
-  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
-  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+  const [usernameModalOpen, setUsernameModalOpen] = useState<boolean>(!initialUsername);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const addToast = (message: string, type: 'success' | 'info' | 'warning' | 'error' = 'info') => {
     const id = `${Date.now()}_${Math.random()}`;
-    setToasts(prev => [...prev.slice(-4), { id, type, message }]);
+    setToasts((prev) => [...prev.slice(-4), { id, type, message }]);
     setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
+      setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 4500);
   };
 
-  // Test connection on boot as mandated
+  // Initialize player data on startup
   useEffect(() => {
-    testFirestoreConnection();
-  }, []);
-
-  // Listen to Firebase auth changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        setIsGuest(false);
-        try {
-          let userProf = await ArcadeService.getUserProfile(currentUser.uid);
-          if (!userProf) {
-            // Wait brief moment or fetch again
-            userProf = {
-              userId: currentUser.uid,
-              username: currentUser.displayName || `Player_${currentUser.uid.slice(0, 5)}`,
-              avatarId: 'cyber_ninja',
-              totalGamesPlayed: 0,
-              totalScore: 0,
-              wins: 0,
-              losses: 0,
-              highScores: {},
-            };
-          }
-          setProfile(userProf);
-          addToast(`Logged in as ${userProf.username}!`, 'success');
-        } catch {
-          // Keep current profile
-        }
-      } else {
-        setIsGuest(true);
-        setProfile(getInitialGuestProfile());
+    async function init() {
+      try {
+        const p = await ArcadeService.getOrInitPlayer(player.username, player.avatarId);
+        setPlayer(p);
+      } catch (err) {
+        console.warn('Initializing player from local storage:', err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
+    init();
   }, []);
 
-  const openAuthModal = (mode: 'login' | 'register' = 'login') => {
+  const openUsernameModal = () => {
     sound.playSelect();
-    setAuthModalMode(mode);
-    setAuthModalOpen(true);
+    setUsernameModalOpen(true);
   };
 
-  const closeAuthModal = () => {
+  const closeUsernameModal = () => {
     sound.playClick();
-    setAuthModalOpen(false);
+    setUsernameModalOpen(false);
+  };
+
+  const setUsername = async (newUsername: string, avatarId?: string) => {
+    const clean = newUsername.trim();
+    if (!clean) return;
+    sound.playSelect();
+    ArcServiceUpdate: {
+      ArcadeService.setStoredUsername(clean);
+      if (avatarId) ArcadeService.setStoredAvatar(avatarId);
+      await ArcadeService.updateUsername(clean);
+      if (avatarId) await ArcadeService.updateAvatar(avatarId);
+      const updated = await ArcadeService.getOrInitPlayer(clean, avatarId || player.avatarId);
+      setPlayer(updated);
+    }
+    setUsernameModalOpen(false);
+    addToast(`Arcade Tag set to "${clean}"!`, 'success');
+  };
+
+  const updateAvatar = async (avatarId: string) => {
+    sound.playSelect();
+    await ArcadeService.updateAvatar(avatarId);
+    setPlayer((prev) => ({ ...prev, avatarId }));
+    addToast('Avatar updated!', 'success');
   };
 
   const selectGame = (gameId: GameId) => {
@@ -163,117 +136,65 @@ export const ArcadeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const toggleCrtEffect = () => {
     sound.playClick();
-    setCrtEffectEnabled(prev => {
+    setCrtEffectEnabled((prev) => {
       const next = !prev;
       localStorage.setItem('arcade_crt', String(next));
       return next;
     });
   };
 
-  const refreshProfile = async () => {
-    if (user) {
-      const updated = await ArcadeService.getUserProfile(user.uid);
-      if (updated) setProfile(updated);
-    }
-  };
-
-  const updateAvatar = async (avatarId: string) => {
-    sound.playSelect();
-    if (user) {
-      await ArcadeService.updateAvatar(user.uid, avatarId);
-      setProfile(prev => ({ ...prev, avatarId }));
-      addToast('Avatar updated!', 'success');
-    } else {
-      const updated = { ...profile, avatarId };
-      setProfile(updated);
-      localStorage.setItem(GUEST_KEY, JSON.stringify(updated));
-      addToast('Guest avatar changed!', 'info');
-    }
-  };
-
-  const logout = async () => {
-    sound.playClick();
-    await ArcadeService.logout();
-    addToast('Signed out. Switched to Guest mode.', 'info');
+  const refreshPlayer = async () => {
+    const updated = await ArcadeService.getOrInitPlayer(player.username, player.avatarId);
+    setPlayer(updated);
   };
 
   const recordFinishedGame = async (params: {
     gameId: GameId;
-    gameName: string;
     score: number;
     mode: 'solo' | 'versus_ai';
-    result?: 'win' | 'loss' | 'solo';
-    aiOpponentName?: string;
+    result?: 'win' | 'loss' | 'draw' | 'solo';
     aiScore?: number;
     detail?: string;
   }) => {
-    const currentHigh = profile.highScores[params.gameId] || 0;
-    const isNewHighScore = params.score > currentHigh;
+    const gameMeta = GAMES_CATALOG.find((g) => g.id === params.gameId);
+    const gameName = gameMeta ? gameMeta.title : params.gameId;
 
-    if (!isGuest && user) {
-      try {
-        await ArcadeService.recordGameResult({
-          ...params,
-          profile,
-        });
-        await refreshProfile();
-        addToast(
-          isNewHighScore
-            ? `NEW HIGH SCORE: ${params.score} in ${params.gameName}!`
-            : `Score recorded: ${params.score} pts!`,
-          'success'
-        );
-      } catch (err) {
-        console.error('Failed to record score:', err);
-      }
+    const res = await ArcadeService.recordGameResult({
+      ...params,
+      player,
+    });
+
+    await refreshPlayer();
+
+    if (res.isNewHighScore) {
+      addToast(`NEW HIGH SCORE: ${params.score} in ${gameName}! Saved to Global Leaderboards!`, 'success');
     } else {
-      // Guest local update
-      const newHighScores = { ...profile.highScores };
-      if (isNewHighScore) {
-        newHighScores[params.gameId] = params.score;
-      }
-      const updated: UserProfile = {
-        ...profile,
-        totalGamesPlayed: (profile.totalGamesPlayed || 0) + 1,
-        totalScore: (profile.totalScore || 0) + params.score,
-        highScores: newHighScores,
-        wins: params.result === 'win' ? (profile.wins || 0) + 1 : profile.wins,
-        losses: params.result === 'loss' ? (profile.losses || 0) + 1 : profile.losses,
-      };
-      setProfile(updated);
-      localStorage.setItem(GUEST_KEY, JSON.stringify(updated));
-      addToast(
-        `Guest Score: ${params.score}! Log in to enter the Global Leaderboards!`,
-        'warning'
-      );
+      addToast(`Game score ${params.score} saved to Global Leaderboard!`, 'info');
     }
 
-    return { isNewHighScore };
+    return res;
   };
 
   return (
     <ArcadeContext.Provider
       value={{
-        user,
-        profile,
-        isGuest,
+        player,
         isLoading,
         activeView,
         selectedGameId,
         soundEnabled,
         crtEffectEnabled,
-        authModalOpen,
-        authModalMode,
+        usernameModalOpen,
         toasts,
-        openAuthModal,
-        closeAuthModal,
+        openUsernameModal,
+        closeUsernameModal,
+        setUsername,
+        updateAvatar,
         setActiveView,
         selectGame,
         toggleSound,
         toggleCrtEffect,
-        refreshProfile,
-        updateAvatar,
-        logout,
+        refreshPlayer,
         addToast,
         recordFinishedGame,
       }}

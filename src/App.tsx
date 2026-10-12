@@ -1,11 +1,11 @@
 /**
- * Neon Arcade Universe - Main Application Entry
+ * ARCADE CLUB - Main Application Entry
  */
 
 import React from 'react';
 import { ArcadeProvider, useArcade } from './context/ArcadeContext';
 import { Navbar } from './components/Navbar';
-import { AuthModal } from './components/AuthModal';
+import { UsernameModal } from './components/UsernameModal';
 import { ToastContainer } from './components/ToastContainer';
 import { LobbyView } from './views/LobbyView';
 import { GameView } from './views/GameView';
@@ -14,10 +14,10 @@ import { ProfileView } from './views/ProfileView';
 import { Gamepad2, Volume2, Shield, Sparkles } from 'lucide-react';
 
 const ArcadeMain: React.FC = () => {
-  const { activeView, crtEffectEnabled, soundEnabled, toggleSound } = useArcade();
+  const { activeView, crtEffectEnabled } = useArcade();
 
   return (
-    <div className={`min-h-screen bg-[#05050d] text-slate-100 flex flex-col justify-between selection:bg-cyan-500 selection:text-black ${crtEffectEnabled ? 'crt-overlay crt-vignette' : ''}`}>
+    <div className={`min-h-screen bg-[#05050d] text-slate-100 flex flex-col justify-between selection:bg-purple-500 selection:text-white ${crtEffectEnabled ? 'crt-overlay crt-vignette' : ''}`}>
       {/* Top Navbar */}
       <Navbar />
 
@@ -33,11 +33,11 @@ const ArcadeMain: React.FC = () => {
       <footer className="mt-12 border-t border-slate-900 bg-slate-950/90 py-8 px-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Gamepad2 className="text-cyan-400" size={18} />
-            <span className="font-heading font-black text-slate-300 tracking-wider">
-              NEON ARCADE UNIVERSE
+            <Gamepad2 className="text-purple-400" size={18} />
+            <span className="font-heading font-black text-slate-200 tracking-wider">
+              ARCADE CLUB
             </span>
-            <span className="text-[10px] text-slate-600">v2.0 • 6 CABIN MACHINES</span>
+            <span className="text-[10px] text-slate-600">6 PLAYABLE MACHINES • NO LOGIN REQUIRED</span>
           </div>
 
           <div className="flex items-center gap-4 text-[11px]">
@@ -50,13 +50,13 @@ const ArcadeMain: React.FC = () => {
           </div>
 
           <div className="text-[10px] text-slate-600">
-            © 2026 Retro-Modern Arcade Platform • All Rights Reserved
+            © 1984–2026 ARCADE CLUB • Virtual Tokens Only
           </div>
         </div>
       </footer>
 
-      {/* Global Modals & Notifications */}
-      <AuthModal />
+      {/* Username Dialog & Alerts */}
+      <UsernameModal />
       <ToastContainer />
     </div>
   );

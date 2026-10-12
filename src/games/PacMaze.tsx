@@ -43,7 +43,7 @@ interface GhostState {
 }
 
 export const PacMaze: React.FC = () => {
-  const { profile, recordFinishedGame, openAuthModal, isGuest } = useArcade();
+  const { player, recordFinishedGame, openUsernameModal } = useArcade();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -454,11 +454,9 @@ export const PacMaze: React.FC = () => {
 
     recordFinishedGame({
       gameId: 'pacmaze',
-      gameName: 'Neon Maze Runner',
       score: finalScore,
       mode: challengeMode ? 'versus_ai' : 'solo',
       result,
-      aiOpponentName: challengeMode ? 'Ghost AI Target' : undefined,
       aiScore: challengeMode ? aiTargetScore : undefined,
       detail: `Level ${level} reached (${finalScore} pts)`,
     });
@@ -585,18 +583,16 @@ export const PacMaze: React.FC = () => {
               <div className="flex gap-3">
                 <button
                   onClick={startGame}
-                  className="py-3 px-6 rounded-xl font-bold uppercase text-xs bg-amber-500 text-slate-950 hover:bg-amber-400 transition flex items-center gap-2"
+                  className="py-3 px-6 rounded-xl font-bold uppercase text-xs bg-amber-500 text-slate-950 hover:bg-amber-400 transition flex items-center gap-2 cursor-pointer"
                 >
                   <RotateCcw size={14} /> Replay Level
                 </button>
-                {isGuest && (
-                  <button
-                    onClick={() => openAuthModal('register')}
-                    className="py-3 px-6 rounded-xl font-bold text-xs bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-900 transition"
-                  >
-                    Save to Global Leaderboard
-                  </button>
-                )}
+                <button
+                  onClick={openUsernameModal}
+                  className="py-3 px-6 rounded-xl font-bold text-xs bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-900 transition cursor-pointer"
+                >
+                  Change Player Tag ({player.username})
+                </button>
               </div>
             </div>
           )}

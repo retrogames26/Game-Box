@@ -1,56 +1,47 @@
 {
   "entities": {
-    "UserProfile": {
-      "title": "UserProfile",
-      "description": "Public profile and arcade statistics for a player",
+    "PlayerProfile": {
+      "title": "PlayerProfile",
+      "description": "Browser player record with username and stats",
       "type": "object",
       "properties": {
-        "userId": {
+        "playerId": {
           "type": "string",
-          "description": "User UID matching auth.uid",
+          "description": "Unique browser installation ID",
           "maxLength": 128
         },
         "username": {
           "type": "string",
-          "description": "Unique gamer tag",
+          "description": "Player gamer tag",
           "maxLength": 24,
-          "minLength": 3,
-          "pattern": "^[a-zA-Z0-9_]{3,24}$"
-        },
-        "displayName": {
-          "type": "string",
-          "description": "Display name",
-          "maxLength": 50
+          "minLength": 2,
+          "pattern": "^[a-zA-Z0-9_]{2,24}$"
         },
         "avatarId": {
           "type": "string",
-          "description": "Chosen retro arcade avatar identifier",
+          "description": "Selected avatar icon",
           "maxLength": 32
         },
-        "totalGamesPlayed": {
+        "gamesPlayed": {
           "type": "number",
-          "description": "Total games played across all arcade machines"
+          "description": "Total games played"
+        },
+        "totalWins": {
+          "type": "number",
+          "description": "Total wins in VS AI matches"
         },
         "totalScore": {
           "type": "number",
-          "description": "Cumulative total score across all games"
-        },
-        "wins": {
-          "type": "number",
-          "description": "Total wins against AI opponents"
-        },
-        "losses": {
-          "type": "number",
-          "description": "Total losses against AI opponents"
+          "description": "Cumulative total score"
         },
         "highScores": {
           "type": "object",
-          "description": "Best scores per game identifier"
+          "description": "Best scores per game"
         },
         "createdAt": {
           "type": "string",
           "format": "date-time",
-          "description": "Account registration timestamp"
+          "description": "Creation timestamp"
         },
         "updatedAt": {
           "type": "string",
@@ -58,51 +49,21 @@
           "description": "Last update timestamp"
         }
       },
-      "required": ["userId", "username", "avatarId"]
+      "required": ["playerId", "username"]
     },
-    "UsernameClaim": {
-      "title": "UsernameClaim",
-      "description": "Unique username registry to guarantee globally unique usernames",
-      "type": "object",
-      "properties": {
-        "username": {
-          "type": "string",
-          "description": "Lowercased username key",
-          "maxLength": 24,
-          "minLength": 3,
-          "pattern": "^[a-z0-9_]{3,24}$"
-        },
-        "uid": {
-          "type": "string",
-          "description": "Auth UID claiming this username",
-          "maxLength": 128
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Reservation timestamp"
-        }
-      },
-      "required": ["username", "uid"]
-    },
-    "ScoreRecord": {
-      "title": "ScoreRecord",
-      "description": "Individual high score submitted for game leaderboards",
+    "ScoreSubmission": {
+      "title": "ScoreSubmission",
+      "description": "Game leaderboard score record",
       "type": "object",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Score record document ID",
+          "description": "Score ID",
           "maxLength": 128
         },
-        "gameId": {
+        "playerId": {
           "type": "string",
-          "description": "Game identifier (claw, pacmaze, shooter, breakout, racer, lander)",
-          "maxLength": 32
-        },
-        "userId": {
-          "type": "string",
-          "description": "Author UID",
+          "description": "Player ID",
           "maxLength": 128
         },
         "username": {
@@ -110,23 +71,28 @@
           "description": "Player username",
           "maxLength": 24
         },
-        "avatarId": {
+        "gameId": {
           "type": "string",
-          "description": "Player avatar icon key",
+          "description": "Game ID (claw, pacmaze, shooter, bowling, pool, poker)",
           "maxLength": 32
         },
         "score": {
           "type": "number",
-          "description": "Numeric game score"
+          "description": "Numeric score achieved"
         },
         "mode": {
           "type": "string",
-          "description": "Game mode played (solo or versus_ai)",
-          "maxLength": 20
+          "description": "Game mode: solo or versus_ai",
+          "maxLength": 24
+        },
+        "result": {
+          "type": "string",
+          "description": "Result: win, loss, draw, solo",
+          "maxLength": 16
         },
         "detail": {
           "type": "string",
-          "description": "Game detail description (level, prizes, time)",
+          "description": "Game details (frames, strikes, hands, etc.)",
           "maxLength": 120
         },
         "createdAt": {
@@ -135,11 +101,11 @@
           "description": "Submission timestamp"
         }
       },
-      "required": ["gameId", "userId", "username", "score"]
+      "required": ["playerId", "username", "gameId", "score"]
     },
-    "GameMatchHistory": {
-      "title": "GameMatchHistory",
-      "description": "Player personal match history",
+    "MatchSubmission": {
+      "title": "MatchSubmission",
+      "description": "Head-to-head match summary against AI",
       "type": "object",
       "properties": {
         "id": {
@@ -149,57 +115,58 @@
         },
         "gameId": {
           "type": "string",
-          "description": "Game identifier",
+          "description": "Game ID",
           "maxLength": 32
         },
-        "gameName": {
+        "playerId": {
           "type": "string",
-          "description": "Display game title",
-          "maxLength": 64
+          "description": "Player ID",
+          "maxLength": 128
         },
-        "score": {
+        "username": {
+          "type": "string",
+          "description": "Player username",
+          "maxLength": 24
+        },
+        "mode": {
+          "type": "string",
+          "description": "Match mode",
+          "maxLength": 24
+        },
+        "playerScore": {
           "type": "number",
-          "description": "Score obtained"
-        },
-        "result": {
-          "type": "string",
-          "description": "Result of match: win, loss, or solo",
-          "maxLength": 16
-        },
-        "aiOpponentName": {
-          "type": "string",
-          "description": "Name of AI opponent if versus mode",
-          "maxLength": 64
+          "description": "Player score"
         },
         "aiScore": {
           "type": "number",
-          "description": "AI opponent score"
+          "description": "AI score"
         },
-        "playedAt": {
+        "winner": {
+          "type": "string",
+          "description": "Winner result: player, ai, draw, solo",
+          "maxLength": 16
+        },
+        "createdAt": {
           "type": "string",
           "format": "date-time",
-          "description": "Match played timestamp"
+          "description": "Match timestamp"
         }
       },
-      "required": ["gameId", "gameName", "score"]
+      "required": ["gameId", "playerId", "username", "playerScore"]
     }
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": { "$ref": "#/entities/UserProfile" },
-      "description": "User public profile and aggregated stats"
+    "/players/{playerId}": {
+      "schema": { "$ref": "#/entities/PlayerProfile" },
+      "description": "Browser player profile"
     },
-    "/usernames/{username}": {
-      "schema": { "$ref": "#/entities/UsernameClaim" },
-      "description": "Unique username registry documents"
+    "/scores/{scoreId}": {
+      "schema": { "$ref": "#/entities/ScoreSubmission" },
+      "description": "Public leaderboard scores"
     },
-    "/leaderboards/{gameId}/scores/{scoreId}": {
-      "schema": { "$ref": "#/entities/ScoreRecord" },
-      "description": "Game-specific leaderboard scores"
-    },
-    "/users/{userId}/history/{historyId}": {
-      "schema": { "$ref": "#/entities/GameMatchHistory" },
-      "description": "Personal game history subcollection for each player"
+    "/matches/{matchId}": {
+      "schema": { "$ref": "#/entities/MatchSubmission" },
+      "description": "Completed match results"
     }
   }
 }

@@ -45,7 +45,7 @@ interface PowerUp {
 }
 
 export const ShootingArena: React.FC = () => {
-  const { profile, recordFinishedGame, openAuthModal, isGuest } = useArcade();
+  const { player, recordFinishedGame, openUsernameModal } = useArcade();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -510,11 +510,9 @@ export const ShootingArena: React.FC = () => {
 
     recordFinishedGame({
       gameId: 'shooter',
-      gameName: 'Galactic Cyber Defender',
       score: finalScore,
       mode: gameMode,
       result,
-      aiOpponentName: gameMode === 'versus_ai' ? 'Viper-7 Ace' : undefined,
       aiScore: gameMode === 'versus_ai' ? finalAiScore : undefined,
       detail: `Wave ${wave} reached (${finalScore} pts)`,
     });
@@ -665,18 +663,16 @@ export const ShootingArena: React.FC = () => {
               <div className="flex gap-3">
                 <button
                   onClick={startCombat}
-                  className="py-3 px-6 rounded-xl font-bold uppercase text-xs bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center gap-2"
+                  className="py-3 px-6 rounded-xl font-bold uppercase text-xs bg-cyan-500 text-slate-950 hover:bg-cyan-400 transition flex items-center gap-2 cursor-pointer"
                 >
                   <RotateCcw size={14} /> Re-Deploy
                 </button>
-                {isGuest && (
-                  <button
-                    onClick={() => openAuthModal('register')}
-                    className="py-3 px-6 rounded-xl font-bold text-xs bg-pink-950/80 text-pink-300 border border-pink-500/40 hover:bg-pink-900 transition"
-                  >
-                    Save to Leaderboard
-                  </button>
-                )}
+                <button
+                  onClick={openUsernameModal}
+                  className="py-3 px-6 rounded-xl font-bold text-xs bg-pink-950/80 text-pink-300 border border-pink-500/40 hover:bg-pink-900 transition cursor-pointer"
+                >
+                  Change Player Tag ({player.username})
+                </button>
               </div>
             </div>
           )}
