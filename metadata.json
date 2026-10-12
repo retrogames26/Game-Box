@@ -1,0 +1,6 @@
+{
+  "name": "Neon Arcade Universe",
+  "description": "Retro-modern arcade gaming platform with 6 playable games, AI opponents, player profiles, and global leaderboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

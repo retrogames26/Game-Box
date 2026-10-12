@@ -1,0 +1,205 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public profile and arcade statistics for a player",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User UID matching auth.uid",
+          "maxLength": 128
+        },
+        "username": {
+          "type": "string",
+          "description": "Unique gamer tag",
+          "maxLength": 24,
+          "minLength": 3,
+          "pattern": "^[a-zA-Z0-9_]{3,24}$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name",
+          "maxLength": 50
+        },
+        "avatarId": {
+          "type": "string",
+          "description": "Chosen retro arcade avatar identifier",
+          "maxLength": 32
+        },
+        "totalGamesPlayed": {
+          "type": "number",
+          "description": "Total games played across all arcade machines"
+        },
+        "totalScore": {
+          "type": "number",
+          "description": "Cumulative total score across all games"
+        },
+        "wins": {
+          "type": "number",
+          "description": "Total wins against AI opponents"
+        },
+        "losses": {
+          "type": "number",
+          "description": "Total losses against AI opponents"
+        },
+        "highScores": {
+          "type": "object",
+          "description": "Best scores per game identifier"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Account registration timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp"
+        }
+      },
+      "required": ["userId", "username", "avatarId"]
+    },
+    "UsernameClaim": {
+      "title": "UsernameClaim",
+      "description": "Unique username registry to guarantee globally unique usernames",
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "description": "Lowercased username key",
+          "maxLength": 24,
+          "minLength": 3,
+          "pattern": "^[a-z0-9_]{3,24}$"
+        },
+        "uid": {
+          "type": "string",
+          "description": "Auth UID claiming this username",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Reservation timestamp"
+        }
+      },
+      "required": ["username", "uid"]
+    },
+    "ScoreRecord": {
+      "title": "ScoreRecord",
+      "description": "Individual high score submitted for game leaderboards",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Score record document ID",
+          "maxLength": 128
+        },
+        "gameId": {
+          "type": "string",
+          "description": "Game identifier (claw, pacmaze, shooter, breakout, racer, lander)",
+          "maxLength": 32
+        },
+        "userId": {
+          "type": "string",
+          "description": "Author UID",
+          "maxLength": 128
+        },
+        "username": {
+          "type": "string",
+          "description": "Player username",
+          "maxLength": 24
+        },
+        "avatarId": {
+          "type": "string",
+          "description": "Player avatar icon key",
+          "maxLength": 32
+        },
+        "score": {
+          "type": "number",
+          "description": "Numeric game score"
+        },
+        "mode": {
+          "type": "string",
+          "description": "Game mode played (solo or versus_ai)",
+          "maxLength": 20
+        },
+        "detail": {
+          "type": "string",
+          "description": "Game detail description (level, prizes, time)",
+          "maxLength": 120
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Submission timestamp"
+        }
+      },
+      "required": ["gameId", "userId", "username", "score"]
+    },
+    "GameMatchHistory": {
+      "title": "GameMatchHistory",
+      "description": "Player personal match history",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Match ID",
+          "maxLength": 128
+        },
+        "gameId": {
+          "type": "string",
+          "description": "Game identifier",
+          "maxLength": 32
+        },
+        "gameName": {
+          "type": "string",
+          "description": "Display game title",
+          "maxLength": 64
+        },
+        "score": {
+          "type": "number",
+          "description": "Score obtained"
+        },
+        "result": {
+          "type": "string",
+          "description": "Result of match: win, loss, or solo",
+          "maxLength": 16
+        },
+        "aiOpponentName": {
+          "type": "string",
+          "description": "Name of AI opponent if versus mode",
+          "maxLength": 64
+        },
+        "aiScore": {
+          "type": "number",
+          "description": "AI opponent score"
+        },
+        "playedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Match played timestamp"
+        }
+      },
+      "required": ["gameId", "gameName", "score"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User public profile and aggregated stats"
+    },
+    "/usernames/{username}": {
+      "schema": { "$ref": "#/entities/UsernameClaim" },
+      "description": "Unique username registry documents"
+    },
+    "/leaderboards/{gameId}/scores/{scoreId}": {
+      "schema": { "$ref": "#/entities/ScoreRecord" },
+      "description": "Game-specific leaderboard scores"
+    },
+    "/users/{userId}/history/{historyId}": {
+      "schema": { "$ref": "#/entities/GameMatchHistory" },
+      "description": "Personal game history subcollection for each player"
+    }
+  }
+}

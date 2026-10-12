@@ -1,0 +1,130 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Deny-All Default Gate
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUsernameString(uname) {
+      return uname is string && uname.size() >= 3 && uname.size() <= 24 && uname.matches('^[a-zA-Z0-9_]{3,24}$');
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['userId', 'username', 'avatarId']) &&
+        data.keys().hasOnly(['userId', 'username', 'displayName', 'avatarId', 'totalGamesPlayed', 'totalScore', 'wins', 'losses', 'highScores', 'createdAt', 'updatedAt']) &&
+        data.userId is string && data.userId.size() <= 128 &&
+        isValidUsernameString(data.username) &&
+        data.avatarId is string && data.avatarId.size() <= 32 &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 50)) &&
+        (!('totalGamesPlayed' in data) || (data.totalGamesPlayed is number && data.totalGamesPlayed >= 0)) &&
+        (!('totalScore' in data) || (data.totalScore is number && data.totalScore >= 0)) &&
+        (!('wins' in data) || (data.wins is number && data.wins >= 0)) &&
+        (!('losses' in data) || (data.losses is number && data.losses >= 0)) &&
+        (!('highScores' in data) || data.highScores is map);
+    }
+
+    function isValidUsernameClaim(data) {
+      return data.keys().hasAll(['username', 'uid']) &&
+        data.keys().hasOnly(['username', 'uid', 'createdAt']) &&
+        data.username is string && data.username.size() >= 3 && data.username.size() <= 24 && data.username.matches('^[a-z0-9_]{3,24}$') &&
+        data.uid is string && data.uid.size() <= 128;
+    }
+
+    function isValidScore(data) {
+      return data.keys().hasAll(['gameId', 'userId', 'username', 'score']) &&
+        data.keys().hasOnly(['id', 'gameId', 'userId', 'username', 'avatarId', 'score', 'mode', 'detail', 'createdAt']) &&
+        data.gameId is string && data.gameId.size() <= 32 &&
+        data.userId is string && data.userId.size() <= 128 &&
+        data.username is string && data.username.size() <= 24 &&
+        data.score is number && data.score >= 0 && data.score <= 10000000 &&
+        (!('avatarId' in data) || (data.avatarId is string && data.avatarId.size() <= 32)) &&
+        (!('mode' in data) || (data.mode is string && data.mode.size() <= 20)) &&
+        (!('detail' in data) || (data.detail is string && data.detail.size() <= 120));
+    }
+
+    function isValidMatchHistory(data) {
+      return data.keys().hasAll(['gameId', 'gameName', 'score']) &&
+        data.keys().hasOnly(['id', 'gameId', 'gameName', 'score', 'result', 'aiOpponentName', 'aiScore', 'playedAt']) &&
+        data.gameId is string && data.gameId.size() <= 32 &&
+        data.gameName is string && data.gameName.size() <= 64 &&
+        data.score is number && data.score >= 0 &&
+        (!('result' in data) || (data.result is string && data.result.size() <= 16)) &&
+        (!('aiOpponentName' in data) || (data.aiOpponentName is string && data.aiOpponentName.size() <= 64)) &&
+        (!('aiScore' in data) || (data.aiScore is number && data.aiScore >= 0));
+    }
+
+    // Public Profiles
+    match /users/{userId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() &&
+        isValidId(userId) &&
+        request.auth.uid == userId &&
+        incoming().userId == userId &&
+        isValidUserProfile(incoming());
+      allow update: if isSignedIn() &&
+        isValidId(userId) &&
+        request.auth.uid == userId &&
+        incoming().userId == userId &&
+        incoming().userId == existing().userId &&
+        isValidUserProfile(incoming()) &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['username', 'displayName', 'avatarId', 'totalGamesPlayed', 'totalScore', 'wins', 'losses', 'highScores', 'updatedAt']);
+      allow delete: if false;
+
+      // Personal Match History Subcollection
+      match /history/{historyId} {
+        allow get, list: if isSignedIn() && request.auth.uid == userId;
+        allow create: if isSignedIn() &&
+          isValidId(historyId) &&
+          request.auth.uid == userId &&
+          isValidMatchHistory(incoming());
+        allow update: if false;
+        allow delete: if isSignedIn() && request.auth.uid == userId;
+      }
+    }
+
+    // Unique Username Registry
+    match /usernames/{username} {
+      allow get, list: if true;
+      allow create: if isSignedIn() &&
+        incoming().uid == request.auth.uid &&
+        isValidUsernameClaim(incoming()) &&
+        !exists(/databases/$(database)/documents/usernames/$(username));
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Global Arcade Leaderboards per Game
+    match /leaderboards/{gameId} {
+      allow get, list: if true;
+
+      match /scores/{scoreId} {
+        allow get, list: if true;
+        allow create: if isSignedIn() &&
+          isValidId(scoreId) &&
+          incoming().userId == request.auth.uid &&
+          incoming().gameId == gameId &&
+          isValidScore(incoming());
+        allow update: if false;
+        allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      }
+    }
+  }
+}
