@@ -125,14 +125,16 @@ export const Pool: React.FC = () => {
     initTable();
   }, []);
 
-  // Aiming with mouse movement
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Aiming with mouse or touch movement
+  const handlePointerAim = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!isAiming || ballsMoving || gameOver) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top) * scaleY;
 
     const cueBall = ballsRef.current.find(b => b.isCue && !b.isPocketed);
     if (!cueBall) return;
@@ -586,8 +588,9 @@ export const Pool: React.FC = () => {
             ref={canvasRef}
             width={TABLE_W}
             height={TABLE_H}
-            onMouseMove={handleMouseMove}
-            className="rounded-2xl max-w-full border-2 border-slate-800 bg-slate-950 cursor-crosshair"
+            onPointerDown={handlePointerAim}
+            onPointerMove={handlePointerAim}
+            className="rounded-2xl max-w-full border-2 border-slate-800 bg-slate-950 cursor-crosshair touch-none"
           />
 
           <div className="mt-2 text-xs font-bold text-emerald-400 flex items-center gap-1.5">

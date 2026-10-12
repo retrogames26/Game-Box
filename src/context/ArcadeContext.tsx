@@ -12,7 +12,7 @@ interface Toast {
 interface ArcadeContextType {
   player: PlayerRecord;
   isLoading: boolean;
-  activeView: 'lobby' | 'game' | 'leaderboards' | 'profile';
+  activeView: 'lobby' | 'game' | 'leaderboards' | 'profile' | 'admin';
   selectedGameId: GameId;
   soundEnabled: boolean;
   crtEffectEnabled: boolean;
@@ -22,7 +22,7 @@ interface ArcadeContextType {
   closeUsernameModal: () => void;
   setUsername: (username: string, avatarId?: string) => Promise<void>;
   updateAvatar: (avatarId: string) => Promise<void>;
-  setActiveView: (view: 'lobby' | 'game' | 'leaderboards' | 'profile') => void;
+  setActiveView: (view: 'lobby' | 'game' | 'leaderboards' | 'profile' | 'admin') => void;
   selectGame: (gameId: GameId) => void;
   toggleSound: () => void;
   toggleCrtEffect: () => void;
@@ -58,7 +58,7 @@ export const ArcadeProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [activeView, setActiveView] = useState<'lobby' | 'game' | 'leaderboards' | 'profile'>('lobby');
+  const [activeView, setActiveView] = useState<'lobby' | 'game' | 'leaderboards' | 'profile' | 'admin'>('lobby');
   const [selectedGameId, setSelectedGameId] = useState<GameId>('claw');
   const [soundEnabled, setSoundEnabled] = useState<boolean>(sound.isEnabled());
   const [crtEffectEnabled, setCrtEffectEnabled] = useState<boolean>(() => {

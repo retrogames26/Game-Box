@@ -5,49 +5,15 @@
       "description": "Browser player record with username and stats",
       "type": "object",
       "properties": {
-        "playerId": {
-          "type": "string",
-          "description": "Unique browser installation ID",
-          "maxLength": 128
-        },
-        "username": {
-          "type": "string",
-          "description": "Player gamer tag",
-          "maxLength": 24,
-          "minLength": 2,
-          "pattern": "^[a-zA-Z0-9_]{2,24}$"
-        },
-        "avatarId": {
-          "type": "string",
-          "description": "Selected avatar icon",
-          "maxLength": 32
-        },
-        "gamesPlayed": {
-          "type": "number",
-          "description": "Total games played"
-        },
-        "totalWins": {
-          "type": "number",
-          "description": "Total wins in VS AI matches"
-        },
-        "totalScore": {
-          "type": "number",
-          "description": "Cumulative total score"
-        },
-        "highScores": {
-          "type": "object",
-          "description": "Best scores per game"
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Creation timestamp"
-        },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Last update timestamp"
-        }
+        "playerId": { "type": "string", "maxLength": 128 },
+        "username": { "type": "string", "maxLength": 24, "minLength": 2 },
+        "avatarId": { "type": "string", "maxLength": 32 },
+        "gamesPlayed": { "type": "number" },
+        "totalWins": { "type": "number" },
+        "totalScore": { "type": "number" },
+        "highScores": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["playerId", "username"]
     },
@@ -56,50 +22,15 @@
       "description": "Game leaderboard score record",
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Score ID",
-          "maxLength": 128
-        },
-        "playerId": {
-          "type": "string",
-          "description": "Player ID",
-          "maxLength": 128
-        },
-        "username": {
-          "type": "string",
-          "description": "Player username",
-          "maxLength": 24
-        },
-        "gameId": {
-          "type": "string",
-          "description": "Game ID (claw, pacmaze, shooter, bowling, pool, poker)",
-          "maxLength": 32
-        },
-        "score": {
-          "type": "number",
-          "description": "Numeric score achieved"
-        },
-        "mode": {
-          "type": "string",
-          "description": "Game mode: solo or versus_ai",
-          "maxLength": 24
-        },
-        "result": {
-          "type": "string",
-          "description": "Result: win, loss, draw, solo",
-          "maxLength": 16
-        },
-        "detail": {
-          "type": "string",
-          "description": "Game details (frames, strikes, hands, etc.)",
-          "maxLength": 120
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Submission timestamp"
-        }
+        "id": { "type": "string", "maxLength": 128 },
+        "playerId": { "type": "string", "maxLength": 128 },
+        "username": { "type": "string", "maxLength": 24 },
+        "gameId": { "type": "string", "maxLength": 32 },
+        "score": { "type": "number" },
+        "mode": { "type": "string", "maxLength": 24 },
+        "result": { "type": "string", "maxLength": 16 },
+        "detail": { "type": "string", "maxLength": 120 },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["playerId", "username", "gameId", "score"]
     },
@@ -108,65 +39,76 @@
       "description": "Head-to-head match summary against AI",
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Match ID",
-          "maxLength": 128
-        },
-        "gameId": {
-          "type": "string",
-          "description": "Game ID",
-          "maxLength": 32
-        },
-        "playerId": {
-          "type": "string",
-          "description": "Player ID",
-          "maxLength": 128
-        },
-        "username": {
-          "type": "string",
-          "description": "Player username",
-          "maxLength": 24
-        },
-        "mode": {
-          "type": "string",
-          "description": "Match mode",
-          "maxLength": 24
-        },
-        "playerScore": {
-          "type": "number",
-          "description": "Player score"
-        },
-        "aiScore": {
-          "type": "number",
-          "description": "AI score"
-        },
-        "winner": {
-          "type": "string",
-          "description": "Winner result: player, ai, draw, solo",
-          "maxLength": 16
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Match timestamp"
-        }
+        "id": { "type": "string", "maxLength": 128 },
+        "gameId": { "type": "string", "maxLength": 32 },
+        "playerId": { "type": "string", "maxLength": 128 },
+        "username": { "type": "string", "maxLength": 24 },
+        "mode": { "type": "string", "maxLength": 24 },
+        "playerScore": { "type": "number" },
+        "aiScore": { "type": "number" },
+        "winner": { "type": "string", "maxLength": 16 },
+        "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["gameId", "playerId", "username", "playerScore"]
+    },
+    "PokerRoom": {
+      "title": "PokerRoom",
+      "description": "Real-time multiplayer poker room",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "roomCode": { "type": "string", "maxLength": 16 },
+        "hostPlayerId": { "type": "string", "maxLength": 128 },
+        "players": { "type": "array" },
+        "communityCards": { "type": "array" },
+        "pot": { "type": "number" },
+        "currentBet": { "type": "number" },
+        "activeTurn": { "type": "number" },
+        "phase": { "type": "string", "maxLength": 24 },
+        "isStarted": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["roomCode", "hostPlayerId"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Admin score moderation audit log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "adminEmail": { "type": "string", "maxLength": 128 },
+        "adminUid": { "type": "string", "maxLength": 128 },
+        "action": { "type": "string", "maxLength": 32 },
+        "targetScoreId": { "type": "string", "maxLength": 128 },
+        "targetUsername": { "type": "string", "maxLength": 24 },
+        "targetGameId": { "type": "string", "maxLength": 32 },
+        "targetScore": { "type": "number" },
+        "reason": { "type": "string", "maxLength": 255 },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["adminUid", "action", "targetScoreId"]
     }
   },
   "firestore": {
     "/players/{playerId}": {
       "schema": { "$ref": "#/entities/PlayerProfile" },
-      "description": "Browser player profile"
+      "description": "Browser player records"
     },
     "/scores/{scoreId}": {
       "schema": { "$ref": "#/entities/ScoreSubmission" },
-      "description": "Public leaderboard scores"
+      "description": "Leaderboard scores"
     },
     "/matches/{matchId}": {
       "schema": { "$ref": "#/entities/MatchSubmission" },
-      "description": "Completed match results"
+      "description": "Match summaries"
+    },
+    "/poker_rooms/{roomId}": {
+      "schema": { "$ref": "#/entities/PokerRoom" },
+      "description": "Live multiplayer poker tables"
+    },
+    "/audit_logs/{logId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Protected administrator moderation audit records"
     }
   }
 }

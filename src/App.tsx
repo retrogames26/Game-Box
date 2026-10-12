@@ -11,10 +11,11 @@ import { LobbyView } from './views/LobbyView';
 import { GameView } from './views/GameView';
 import { LeaderboardsView } from './views/LeaderboardsView';
 import { ProfileView } from './views/ProfileView';
+import { AdminView } from './views/AdminView';
 import { Gamepad2, Volume2, Shield, Sparkles } from 'lucide-react';
 
 const ArcadeMain: React.FC = () => {
-  const { activeView, crtEffectEnabled } = useArcade();
+  const { activeView, crtEffectEnabled, setActiveView } = useArcade();
 
   return (
     <div className={`min-h-screen bg-[#05050d] text-slate-100 flex flex-col justify-between selection:bg-purple-500 selection:text-white ${crtEffectEnabled ? 'crt-overlay crt-vignette' : ''}`}>
@@ -27,6 +28,7 @@ const ArcadeMain: React.FC = () => {
         {activeView === 'game' && <GameView />}
         {activeView === 'leaderboards' && <LeaderboardsView />}
         {activeView === 'profile' && <ProfileView />}
+        {activeView === 'admin' && <AdminView />}
       </main>
 
       {/* Retro Arcade Footer */}
@@ -47,6 +49,12 @@ const ArcadeMain: React.FC = () => {
             <span className="flex items-center gap-1 text-slate-400">
               <Shield size={12} className="text-purple-400" /> Firebase Cloud Firestore
             </span>
+            <button
+              onClick={() => setActiveView('admin')}
+              className="text-slate-400 hover:text-purple-400 transition cursor-pointer underline text-[11px]"
+            >
+              Operator Console
+            </button>
           </div>
 
           <div className="text-[10px] text-slate-600">

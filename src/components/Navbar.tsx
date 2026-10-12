@@ -7,7 +7,8 @@ import {
   VolumeX,
   Tv,
   Edit3,
-  Sparkles
+  Sparkles,
+  Shield
 } from 'lucide-react';
 import { useArcade } from '../context/ArcadeContext';
 import { AVATARS } from '../types/arcade';
@@ -105,6 +106,22 @@ export const Navbar: React.FC = () => {
           >
             <UserIcon size={16} />
             <span>Profile</span>
+          </button>
+
+          <button
+            onClick={() => {
+              sound.playClick();
+              setActiveView('admin');
+            }}
+            title="Arcade Operator & Moderation Console"
+            className={`px-2.5 sm:px-3 py-2 rounded-xl text-xs sm:text-sm font-bold tracking-wider uppercase transition flex items-center gap-1.5 cursor-pointer ${
+              activeView === 'admin'
+                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/50 shadow-sm shadow-rose-500/20'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'
+            }`}
+          >
+            <Shield size={16} />
+            <span className="hidden lg:inline">Admin</span>
           </button>
         </nav>
 

@@ -93,6 +93,49 @@ export const Bowling: React.FC = () => {
     resetPins();
   }, []);
 
+  // Keyboard navigation for stance, spin, and throw
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isRolling || gameOver) return;
+
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        e.preventDefault();
+        setBallX((prev) => Math.max(180, prev - 10));
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        e.preventDefault();
+        setBallX((prev) => Math.min(320, prev + 10));
+      } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+        e.preventDefault();
+        setSpin((s) => Math.min(2, s + 1));
+      } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        setSpin((s) => Math.max(-2, s - 1));
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        if (!isPowering) {
+          setIsPowering(true);
+        } else {
+          releaseThrow();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPowering, isRolling, gameOver, ballX, spin]);
+
+  // Canvas pointer click/drag to position ball
+  const handleCanvasPointer = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (isRolling || gameOver) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX - rect.left;
+    const scaleX = canvas.width / rect.width;
+    const canvasX = clientX * scaleX;
+    setBallX(Math.max(180, Math.min(320, Math.round(canvasX))));
+  };
+
   // Oscillating power meter loop
   useEffect(() => {
     if (!isPowering || isRolling || gameOver) return;
@@ -645,7 +688,11 @@ export const Bowling: React.FC = () => {
             ref={canvasRef}
             width={500}
             height={460}
-            className="rounded-2xl max-w-full border border-slate-800 bg-slate-950"
+            onPointerDown={handleCanvasPointer}
+            onPointerMove={(e) => {
+              if (e.buttons === 1) handleCanvasPointer(e);
+            }}
+            className="rounded-2xl max-w-full border border-slate-800 bg-slate-950 cursor-crosshair touch-none"
           />
 
           {/* Status ticker */}
@@ -672,7 +719,7 @@ export const Bowling: React.FC = () => {
               <div className="flex gap-3">
                 <button
                   onClick={restartBowling}
-                  className="py-3 px-6 rounded-xl font-bold uppercase text-xs bg-rose-500 text-slate-950 hover:bg-rose-400 transition flex items-center gap-2"
+                  className="py-3 px-6 rounded-xl font-bold uppercase text-xs bg-rose-500 text-slate-950 hover:bg-rose-400 transition flex items-center gap-2 cursor-pointer"
                 >
                   <RotateCcw size={14} /> Bowl Another Series
                 </button>
@@ -688,7 +735,7 @@ export const Bowling: React.FC = () => {
               <Zap size={16} /> Aim & Throw Mechanics
             </h3>
 
-            {/* Position Slider */}
+            {/* Position Slider & Step Buttons */}
             <div className="space-y-3">
               <label className="text-xs font-semibold text-slate-400 flex justify-between">
                 <span>Approach Position</span>
@@ -703,6 +750,25 @@ export const Bowling: React.FC = () => {
                 onChange={(e) => setBallX(Number(e.target.value))}
                 className="w-full accent-rose-500 cursor-pointer"
               />
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={isRolling || gameOver}
+                  onClick={() => setBallX((prev) => Math.max(180, prev - 15))}
+                  className="py-2.5 px-2 rounded-xl text-xs font-bold uppercase bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95 disabled:opacity-40 cursor-pointer"
+                >
+                  ◀ Stance Left (A)
+                </button>
+                <button
+                  type="button"
+                  disabled={isRolling || gameOver}
+                  onClick={() => setBallX((prev) => Math.min(320, prev + 15))}
+                  className="py-2.5 px-2 rounded-xl text-xs font-bold uppercase bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-95 disabled:opacity-40 cursor-pointer"
+                >
+                  Stance Right (D) ▶
+                </button>
+              </div>
 
               {/* Hook Spin Selector */}
               <label className="text-xs font-semibold text-slate-400 flex justify-between mt-2">
@@ -772,7 +838,12 @@ export const Bowling: React.FC = () => {
                 }`}
               >
                 <CircleDot size={18} />
-                <span>{isPowering ? 'LOCK POWER & THROW!' : 'CHARGE & ROLL BALL'}</span>
+                <div className="flex flex-col items-center">
+                  <span>{isPowering ? 'LOCK POWER & THROW!' : 'CHARGE & ROLL BALL'}</span>
+                  <span className="text-[10px] font-bold text-slate-900 tracking-normal font-sans">
+                    [SPACEBAR OR CLICK]
+                  </span>
+                </div>
               </button>
             </div>
           </div>
